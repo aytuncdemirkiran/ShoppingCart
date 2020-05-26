@@ -23,6 +23,7 @@ namespace ShoppingCart.Domain.ShoppingCart
         private Product.Product _jblCharge4;
         private Product.Product _airPod;
         private Product.Product _spigenCase;
+        private Product.Product _xiaomiDots;
 
         #endregion
         
@@ -67,9 +68,14 @@ namespace ShoppingCart.Domain.ShoppingCart
                 Price.FromDecimal(2000),
                 new Category(CategoryTitle.CreateFromString("Phone")));
             
-            _spigenCase = new Product.Product(ProductTitle.CreateFromString("IphoneXR"),
+            _spigenCase = new Product.Product(ProductTitle.CreateFromString("SpigenCase"),
                 Price.FromDecimal(100),
                 new Category(CategoryTitle.CreateFromString("PhoneCases"),new Category(CategoryTitle.CreateFromString("Phone"))));
+            
+            
+            _xiaomiDots = new Product.Product(ProductTitle.CreateFromString("XiaomiDots"),
+                Price.FromDecimal(100),
+                new Category(CategoryTitle.CreateFromString("Earphone")));
 
             _campaignForEarphoneCategoryOver1QuantityDiscountRate20 = new Campaign(
                 new Category(CategoryTitle.CreateFromString("Earphone"), null), 2, DiscountTypeEnum.Rate, 20);
@@ -716,6 +722,35 @@ namespace ShoppingCart.Domain.ShoppingCart
             Assert.That(shoppingCart.AppliedCampaignOnCart,
                 Is.EqualTo(_campaignForEarphoneCategoryOver1QuantityDiscountAmount500));
             Assert.That(shoppingCart.GetCampaignDiscounts(), Is.EqualTo(500));
+            Assert.That(shoppingCart.AppliedCouponOnCart, Is.Null);
+            Assert.That(shoppingCart.GetCouponDiscounts(), Is.EqualTo(0));
+        }
+        
+        [Test]
+        public void ApplyDiscount_AppliesAmountDiscountWithSumOfItemsAmountToItemOnCampaignCategory_WhenOneValidDiscountAmountCampaignGivenAndDiscountAmountGreaterThanTotalAmount()
+        {
+            //Arrange 
+            var shoppingCart = _emptyCart;
+            shoppingCart.AddItem(_xiaomiDots,
+                1);
+            //Act
+            shoppingCart.ApplyDiscount(new List<Campaign>() {_campaignForEarphoneCategoryOver1QuantityDiscountAmount500});
+            //Assert
+            Assert.That(shoppingCart.Items.Count, Is.EqualTo(1));
+            Assert.That(shoppingCart.Items.Sum(s => s.Quantity), Is.EqualTo(1));
+            Assert.That(shoppingCart.Items.FirstOrDefault(s => s.Product.Equals(_xiaomiDots)), Is.Not.Null);
+            Assert.That(shoppingCart.Price.Amount, Is.EqualTo(100));
+            Assert.That(shoppingCart.FinalPrice.Amount, Is.EqualTo(0));
+            Assert.That(shoppingCart.Items.First(s => s.Product.Equals(_xiaomiDots)).Quantity, Is.EqualTo(1));
+            Assert.That(shoppingCart.Items.First(s => s.Product.Equals(_xiaomiDots)).Price.Amount,
+                Is.EqualTo(100));
+            Assert.That(shoppingCart.Items.First(s => s.Product.Equals(_xiaomiDots)).FinalPrice.Amount,
+                Is.EqualTo(0));
+            Assert.That(shoppingCart.Items.First(s => s.Product.Equals(_xiaomiDots)).CampaignDiscountPrice.Amount,
+                Is.EqualTo(100));
+            Assert.That(shoppingCart.AppliedCampaignOnCart,
+                Is.EqualTo(_campaignForEarphoneCategoryOver1QuantityDiscountAmount500));
+            Assert.That(shoppingCart.GetCampaignDiscounts(), Is.EqualTo(100));
             Assert.That(shoppingCart.AppliedCouponOnCart, Is.Null);
             Assert.That(shoppingCart.GetCouponDiscounts(), Is.EqualTo(0));
         }

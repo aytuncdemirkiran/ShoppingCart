@@ -202,15 +202,21 @@ namespace ShoppingCart.Domain.ShoppingCart
                     }
                     else if (AppliedCampaignOnCart.DiscountType == DiscountTypeEnum.Amount)
                     {
+                        var discount = (decimal)AppliedCampaignOnCart.Discount;
+                        //Discount indirim uygulanacak ürün tutarından büyükse ürün tutarına eşitlenir.
+                        if (discount > sumAmount)
+                        {
+                            discount = sumAmount;
+                        }
                         //Distribute to Items
                         foreach (var item in itemsToBeDiscounted)
                         {
                             var discountAmount =
-                                (item.FinalPrice.Amount * (decimal) AppliedCampaignOnCart.Discount) / sumAmount;
+                                (item.FinalPrice.Amount * discount) / sumAmount;
                             item.MakeCampaignDiscount(Price.FromDecimal(discountAmount));
                         }
 
-                        CampaignDiscountPrice = Price.FromDecimal((decimal) AppliedCampaignOnCart.Discount);
+                        CampaignDiscountPrice = Price.FromDecimal(discount);
                         FinalPrice = Price.FromDecimal(Price.Amount - CampaignDiscountPrice.Amount);
                     }
                 }
@@ -294,10 +300,15 @@ namespace ShoppingCart.Domain.ShoppingCart
                 else if (AppliedCouponOnCart.DiscountType == DiscountTypeEnum.Amount)
                 {
                     CouponDiscountPrice = Price.FromDecimal((decimal) AppliedCouponOnCart.Discount);
+                    //indirim tutarı sepet tutarından büyükse indirim tutarını sepet tutarına eşitle
+                    if (CouponDiscountPrice.Amount > FinalPrice.Amount)
+                    {
+                        CouponDiscountPrice = FinalPrice;
+                    }
                     //Distribute to Items
                     foreach (var item in Items)
                     {
-                        var discountAmount = (item.FinalPrice.Amount * (decimal) AppliedCouponOnCart.Discount) /
+                        var discountAmount = (item.FinalPrice.Amount * CouponDiscountPrice.Amount) /
                                              FinalPrice.Amount;
                         item.MakeCouponDiscount(Price.FromDecimal(discountAmount));
                     }
